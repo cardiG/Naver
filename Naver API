@@ -1,0 +1,33 @@
+import time, csv
+import requests
+import pandas as pd
+import signaturehelper
+
+
+def get_header(method, uri, api_key, secret_key, customer_id):
+    timestamp = str(round(time.time() * 1000))
+    signature = signaturehelper.Signature.generate(timestamp, method, uri, SECRET_KEY)
+    return {'Content-Type': 'application/json; charset=UTF-8', 'X-Timestamp': timestamp, 'X-API-KEY': API_KEY,
+            'X-Customer': str(CUSTOMER_ID), 'X-Signature': signature}
+
+BASE_URL = 'https://api.naver.com'
+API_KEY = '010000000041a34373a01c9108f5be95c31bf2064a95e4ea019b4b04176325b09543c6fca7'
+SECRET_KEY = 'AQAAAABBo0NzoByRCPW+lcMb8gZKd0zbExabLck8R4R9zUSagA=='
+CUSTOMER_ID = '2154946'
+
+# 1. GET Summary Report per multiple entities
+uri = '/stats'
+method = 'GET'
+i_ds = ['cmp-a001-01-000000003886355','cmp-a001-01-000000003886359']
+r = requests.get(BASE_URL + uri, params={'ids': i_ds,'fields': '["clkCnt","impCnt","salesAmt", "ctr", "cpc", "avgRnk", "ccnt"]', 'timeRange': '{"since":"2021-07-01","until":"2021-07-25"}'}, headers=get_header(method, uri, API_KEY, SECRET_KEY, CUSTOMER_ID))
+print("response status_code = {}".format(r.status_code))
+data = format(r.json())
+print(data)
+data_1 = eval(data)
+print(type(data_1))
+
+fields = ['id', 'ctr', 'clkCnt', 'cpc', 'ccnt', 'avgRnk', 'impCnt', 'salesAmt']
+with open('names.csv', 'w') as csvfile:
+    writer = csv.DictWriter(csvfile,fieldnames=fields)
+    writer.writeheader()
+    writer.writerows(data_1['data'])
